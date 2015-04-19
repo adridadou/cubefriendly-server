@@ -1,20 +1,22 @@
 package config
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
-import scala.language.postfixOps
-
+import controllers.WebModule
 import play.api._
 import play.api.mvc._
+import scaldi.Injector
+import scaldi.play.ScaldiSupport
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.language.postfixOps
 
 /**
  * Cubefriendly
  * Created by david on 05.04.15.
  */
 object Global extends WithFilters(new AddCORSHeader())
-with GlobalSettings {
-
+with GlobalSettings with ScaldiSupport {
+  override def applicationModule: Injector = new WebModule
 }
 
 

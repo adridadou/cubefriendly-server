@@ -15,5 +15,6 @@ resolvers ++= Seq(
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
 
 libraryDependencies ++= Seq(
-  "org.cubefriendly" %% "cubefriendly-core" % "0.1-SNAPSHOT"
+  "org.cubefriendly" %% "cubefriendly-core" % "0.1-SNAPSHOT",
+  "org.scaldi" %% "scaldi-play" % "0.5.4"
 )
