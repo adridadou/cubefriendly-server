@@ -2,6 +2,7 @@ package controllers
 
 import java.io.File
 
+import config.AppConfig
 import org.cubefriendly.processors.{CubeConfig, DataHeader, DataProcessor, DataProcessorProvider}
 import org.mapdb.DB
 import org.specs2.mock.Mockito
@@ -18,7 +19,8 @@ class SourceProcessorRestSpec extends Specification with Mockito {
     "load the source file" in {
       val service = mock[SourceManagementService]
       val provider = mock[DataProcessorProvider]
-      val api = new SourceProcessorRestController(service, provider)
+      val config = mock[AppConfig]
+      val api = new SourceProcessorRestController(service, provider, config)
       //Given
       val source = TemporaryFile.apply("cubefriendly", "source")
       //When
@@ -34,7 +36,8 @@ class SourceProcessorRestSpec extends Specification with Mockito {
       val service = mock[SourceManagementService]
       val provider = mock[DataProcessorProvider]
       val processor = mock[DataProcessor]
-      val api = new SourceProcessorRestController(service, provider)
+      val config = mock[AppConfig]
+      val api = new SourceProcessorRestController(service, provider, config)
       val header = mock[DataHeader]
 
       service.getSource(filename) returns file
@@ -57,7 +60,8 @@ class SourceProcessorRestSpec extends Specification with Mockito {
       val service = mock[SourceManagementService]
       val provider = mock[DataProcessorProvider]
       val processor = mock[DataProcessor]
-      val api = new SourceProcessorRestController(service, provider)
+      val config = mock[AppConfig]
+      val api = new SourceProcessorRestController(service, provider, config)
       val db = mock[DB]
       val cubeConfig = CubeConfig(name = "name", metrics = Seq())
       service.getSource(filename) returns file

@@ -1,6 +1,6 @@
-package controllers
+package config
 
-import config.{AppConfig, PlayAppConfig}
+import controllers.SourceProcessorRestController
 import scaldi.Module
 
 /**
@@ -8,7 +8,6 @@ import scaldi.Module
  * Created by david on 19.04.15.
  */
 class WebModule extends Module {
-  binding to new AdminRestController
   binding to injected[SourceProcessorRestController]
   bind[AppConfig] to new PlayAppConfig
 }

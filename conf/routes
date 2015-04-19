@@ -1,15 +1,8 @@
-# Routes
-# This file defines all application routes (Higher priority routes first)
-# ~~~~
-
-# Home page
-GET     /                           controllers.Application.index
-
 #API
-POST    /admin/load                 controllers.AdminController.load
-OPTIONS /admin/load                 controllers.AdminController.loadOpt
-GET     /admin/load/pending         controllers.AdminController.listPending
-GET     /admin/process/header/:file controllers.AdminController.getCsvHeaderFile(file)
+POST    /admin/source/load          @controllers.SourceProcessorRestController.loadForm
+GET     /admin/source/pending       @controllers.SourceProcessorRestController.listPending
+GET     /admin/source/header/:file  @controllers.SourceProcessorRestController.headerAction(file)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

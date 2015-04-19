@@ -1,6 +1,7 @@
 package config
 
-import controllers.WebModule
+import controllers.SourceProcessorModule
+import org.cubefriendly.processors.DataProcessorModule
 import play.api._
 import play.api.mvc._
 import scaldi.Injector
@@ -16,7 +17,7 @@ import scala.language.postfixOps
  */
 object Global extends WithFilters(new AddCORSHeader())
 with GlobalSettings with ScaldiSupport {
-  override def applicationModule: Injector = new WebModule
+  override def applicationModule: Injector = new WebModule :: new SourceProcessorModule :: new DataProcessorModule
 }
 
 
