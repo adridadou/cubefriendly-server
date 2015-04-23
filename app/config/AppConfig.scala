@@ -14,6 +14,7 @@ trait AppConfig {
 }
 
 class PlayAppConfig extends AppConfig {
-  lazy val processDirectory = Play.application.configuration.getString("process.directory").get
-  lazy val cubesDirectory = Play.application.configuration.getString("cubes.directory").get
+
+  lazy val processDirectory = Play.application.configuration.getString("process.directory").getOrElse("")
+  lazy val cubesDirectory = Play.application.configuration.getString("cubes.directory").getOrElse("cube")
 }
