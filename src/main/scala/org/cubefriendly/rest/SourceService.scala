@@ -14,8 +14,7 @@ import org.cubefriendly.processors.CsvProcessor
 import scaldi.Injectable
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 
 /**
  * Cubefriendly
@@ -29,7 +28,7 @@ trait Protocols extends DefaultJsonProtocol {
 
 case class MessageResult(message:String)
 
-trait CubefriendlyService extends Protocols with Injectable {
+trait SourceService extends Protocols with Injectable {
 
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
@@ -56,39 +55,29 @@ trait CubefriendlyService extends Protocols with Injectable {
     }
   }
 
-  val routes = {
+  val sourceRoutes = {
     logRequestResult("cubefriendly-microservice") {
-      pathPrefix("admin") {
-        pathPrefix("source") {
-          path("list") {
-            complete {
-              new File(cubeDirectory).listFiles().map(_.getName)
-            }
-          } ~
-          path("upload") {
-            post {
-              entity(as[FormData]) { formData => {
-                Await.result(
-                  formData.parts.runForeach(bodyPart => {
-                    // read a upload file, but not execute this block
-                    val filename = bodyPart.filename.getOrElse("upload")
-                    val dest = cubeFile(filename) match {
-                      case Some(file) =>
-                        file.delete()
-                        file
-                      case None => new File(cubeFileName(filename))
-                    }
-
-                    bodyPart.entity.dataBytes.runFold(new CsvProcessor(dest))({ (processor, byteString) =>
-                      processor.process(byteString.decodeString("UTF-8").toCharArray)
-                    }).map(_.complete().close())
-                  }).map(u => complete{MessageResult("upload successful!")}), Duration.Inf)
-              }}
-            }
+      pathPrefix("admin" / "source") {
+        path("list") {
+          complete {
+            new File(cubeDirectory).listFiles().map(_.getName)
           }
+        } ~ (path("upload") & post & entity(as[FormData])){
+            formData => complete {formData.parts.runForeach(upload).map(u => MessageResult("upload successful!"))}
         }
       }
     }
+  }
+
+  private def upload(bodyPart:FormData.BodyPart):Unit = {
+    // read a upload file, but not execute this block
+    val filename = bodyPart.filename.getOrElse("upload")
+    cubeFile(filename).foreach(_.delete())
+    val dest = cubeFile(filename).getOrElse(new File(cubeFileName(filename)))
+
+    bodyPart.entity.dataBytes.runFold(new CsvProcessor(dest))({ (processor, byteString) =>
+      processor.process(byteString.decodeString("UTF-8").toCharArray)
+    }).map(_.complete().close())
   }
 
   val optionsSupport = {
@@ -98,7 +87,4 @@ trait CubefriendlyService extends Protocols with Injectable {
   val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),
     RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
     RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control") )
-  val corsRoutes = {
-    respondWithHeaders(corsHeaders) {routes ~ optionsSupport}
-  }
 }
