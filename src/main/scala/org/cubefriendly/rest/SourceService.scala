@@ -10,8 +10,8 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.stream.FlowMaterializer
 import com.typesafe.config.Config
+import org.cubefriendly.manager.{CubeManager, CubeSearchResult, CubeSearchResultEntry}
 import org.cubefriendly.processors.CsvProcessor
-import scaldi.Injectable
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContextExecutor
@@ -24,15 +24,19 @@ import scala.concurrent.ExecutionContextExecutor
 trait Protocols extends DefaultJsonProtocol {
   //Put here case class transformation
   implicit val messageFormat = jsonFormat1(MessageResult)
+
+  implicit val cubeSearchResultFormatEntry = jsonFormat1(CubeSearchResultEntry)
+  implicit val cubeSearchResultFormat =  jsonFormat1(CubeSearchResult.apply)
 }
 
 case class MessageResult(message:String)
 
-trait SourceService extends Protocols with Injectable {
+trait SourceService extends Protocols {
 
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
   implicit val materializer: FlowMaterializer
+  implicit val manager: CubeManager
 
   def config: Config
   val logger: LoggingAdapter
@@ -60,7 +64,7 @@ trait SourceService extends Protocols with Injectable {
       pathPrefix("admin" / "source") {
         path("list") {
           complete {
-            new File(cubeDirectory).listFiles().map(_.getName)
+            manager.list()
           }
         } ~ (path("upload") & post & entity(as[FormData])){
             formData => complete {formData.parts.runForeach(upload).map(u => MessageResult("upload successful!"))}
