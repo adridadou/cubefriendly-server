@@ -1,5 +1,6 @@
 package org.cubefriendly.manager
 
+import com.typesafe.config.Config
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -9,7 +10,10 @@ import org.scalatest.{FlatSpec, Matchers}
  */
 class CubeManagerSpec extends FlatSpec with Matchers with MockFactory{
   "CubeManagerImpl" should "return the list of cubes available" in {
-    val manager = new CubeManagerImpl()
-    manager.list().entries should contain theSameElementsAs Seq(CubeSearchResultEntry("test1"),CubeSearchResultEntry("test2"))
+    val config = mock[Config]
+    (config.getString _).expects("services.cubefriendly.cubes").returns("src/test/resources/cubes")
+
+    val manager = new CubeManagerImpl(config)
+    manager.list().entries should contain theSameElementsAs Seq(CubeSearchResultEntry("test1.cube"),CubeSearchResultEntry("test2.cube"))
   }
 }

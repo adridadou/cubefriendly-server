@@ -3,7 +3,7 @@ enablePlugins(JavaAppPackaging)
 name         := "cubefriendly-studio"
 organization := "org.cubefriendly"
 version      := "0.1-SNAPSHOT"
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -22,19 +22,19 @@ publishTo := {
 
 libraryDependencies ++= {
   val akkaV       = "2.3.11"
-  val akkaStreamV = "1.0-RC2"
+  val akkaStreamV = "1.0-RC4"
   val scalaTestV  = "2.2.4"
   val scaldiV     = "0.5.5"
   Seq(
     "com.typesafe.akka" %% "akka-actor"                           % akkaV,
     "com.typesafe.akka" %% "akka-stream-experimental"             % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-core-experimental"          % akkaStreamV,
-    "com.typesafe.akka" %% "akka-http-scala-experimental"         % akkaStreamV,
+    "com.typesafe.akka" %% "akka-http-experimental"               % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental"    % akkaStreamV,
     "org.scaldi"        %% "scaldi-akka"                          % scaldiV,
     "org.scaldi"        %% "scaldi"                               % scaldiV,
     "org.cubefriendly"  %% "cubefriendly-core"                    % version.value,
-    "com.typesafe.akka" %% "akka-http-testkit-scala-experimental" % akkaStreamV % "test",
+    "com.typesafe.akka" %% "akka-http-testkit-experimental"       % akkaStreamV % "test",
     "org.scalatest"     %% "scalatest"                            % scalaTestV % "test",
     "org.scalamock"     %% "scalamock-scalatest-support"          % "3.2"      % "test"
   )

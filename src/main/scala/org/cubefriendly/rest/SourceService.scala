@@ -6,9 +6,8 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Multipart.FormData
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
-import akka.stream.FlowMaterializer
+import akka.stream.Materializer
 import com.typesafe.config.Config
 import org.cubefriendly.manager.{CubeManager, CubeSearchResult, CubeSearchResultEntry}
 import org.cubefriendly.processors.CsvProcessor
@@ -35,29 +34,11 @@ trait SourceService extends Protocols {
 
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
-  implicit val materializer: FlowMaterializer
+  implicit val materializer: Materializer
   implicit val manager: CubeManager
 
   def config: Config
   val logger: LoggingAdapter
-
-  private def cubeDirectory:String = config.getString("services.cubefriendly.cubes")
-  private def cubeFileName(name:String) = cubeDirectory + "/" + name + ".cube"
-
-  private def cubeFile(name:String) : Option[File] = {
-    val directory = new File(cubeDirectory)
-    if(directory.exists()) {
-      val cube = new File(cubeFileName(name))
-      if(cube.exists() && cube.isFile) {
-        Some(cube)
-      }else {
-        None
-      }
-    }else {
-      directory.mkdirs()
-      None
-    }
-  }
 
   val sourceRoutes = {
     logRequestResult("cubefriendly-microservice") {
@@ -76,19 +57,11 @@ trait SourceService extends Protocols {
   private def upload(bodyPart:FormData.BodyPart):Unit = {
     // read a upload file, but not execute this block
     val filename = bodyPart.filename.getOrElse("upload")
-    cubeFile(filename).foreach(_.delete())
-    val dest = cubeFile(filename).getOrElse(new File(cubeFileName(filename)))
+    manager.cubeFile(filename).foreach(_.delete())
+    val dest = manager.cubeFile(filename).getOrElse(new File(manager.cubeFileName(filename)))
 
     bodyPart.entity.dataBytes.runFold(new CsvProcessor(dest))({ (processor, byteString) =>
       processor.process(byteString.decodeString("UTF-8").toCharArray)
     }).map(_.complete().close())
   }
-
-  val optionsSupport = {
-    options {complete("")}
-  }
-
-  val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),
-    RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
-    RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control") )
 }
