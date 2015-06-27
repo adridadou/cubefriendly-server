@@ -49,6 +49,11 @@ trait SourceService extends Protocols {
           }
         } ~ (path("upload") & post & entity(as[FormData])){
             formData => complete {formData.parts.runForeach(upload).map(u => MessageResult("upload successful!"))}
+        } ~ path("delete" / Rest) {cube =>
+          complete {
+            manager.delete(cube)
+            ""
+          }
         }
       }
     }

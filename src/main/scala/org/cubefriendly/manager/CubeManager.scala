@@ -11,6 +11,7 @@ import scaldi.Module
  */
 trait CubeManager {
   def list():CubeSearchResult
+  def delete(name:String) :Unit
   def cubeFile(name:String):Option[File]
   def cubeFileName(name:String) :String
 }
@@ -38,6 +39,10 @@ class CubeManagerImpl(config:Config) extends CubeManager{
       cubeDirectory.mkdirs()
       None
     }
+  }
+
+  override def delete(name: String): Unit = {
+    cubeFile(name).foreach(_.delete())
   }
 }
 
