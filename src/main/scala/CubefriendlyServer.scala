@@ -12,19 +12,17 @@ import scaldi.Injectable
 /**
  * Cubefriendly
  * Created by david on 24.05.15.
+ * This code is released under Apache 2 license
  */
 object CubefriendlyServer extends App with SourceService with Injectable{
 
-  implicit val appModule = new CubeManagerModule
   override implicit val system = ActorSystem()
   override implicit val executor = system.dispatcher
   override implicit val materializer = ActorMaterializer()
   override implicit val manager = inject[CubeManager]
-
   override val config = ConfigFactory.load()
-
   override val logger = Logging(system, getClass)
-
+  implicit val appModule = new CubeManagerModule
   val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),
     RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
     RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control") )

@@ -7,6 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 /**
  * Cubefriendly
  * Created by david on 13.06.15.
+ * This code is released under Apache 2 license
  */
 class CubeManagerSpec extends FlatSpec with Matchers with MockFactory{
   "CubeManagerImpl" should "return the list of cubes available" in {
