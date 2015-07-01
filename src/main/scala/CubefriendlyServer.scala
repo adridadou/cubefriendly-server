@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import org.cubefriendly.manager.{CubeManager, CubeManagerModule}
-import org.cubefriendly.rest.SourceService
+import org.cubefriendly.rest.{CubeQueryService, SourceService}
 import scaldi.Injectable
 
 /**
@@ -14,7 +14,7 @@ import scaldi.Injectable
  * Created by david on 24.05.15.
  * This code is released under Apache 2 license
  */
-object CubefriendlyServer extends App with SourceService with Injectable{
+object CubefriendlyServer extends App with SourceService with CubeQueryService with Injectable{
 
   implicit val appModule = new CubeManagerModule
 
@@ -33,7 +33,7 @@ object CubefriendlyServer extends App with SourceService with Injectable{
   }
 
   val corsRoutes = {
-    respondWithHeaders(corsHeaders) {sourceRoutes ~ optionsSupport}
+    respondWithHeaders(corsHeaders) {sourceRoutes ~ cubeQueryRoutes ~ optionsSupport}
   }
 
   Http().bindAndHandle(corsRoutes, config.getString("http.interface"), config.getInt("http.port"))

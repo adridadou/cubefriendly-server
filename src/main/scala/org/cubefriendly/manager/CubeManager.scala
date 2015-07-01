@@ -3,7 +3,8 @@ package org.cubefriendly.manager
 import java.io.File
 
 import com.typesafe.config.Config
-import org.cubefriendly.data.{Cube, Dimension}
+import org.cubefriendly.data.{Cube, Dimension, QueryBuilder}
+import org.cubefriendly.rest.CubeQuery
 import scaldi.Module
 
 /**
@@ -16,6 +17,7 @@ trait CubeManager {
   def delete(name: String): Boolean
   def cubeFile(name:String):Option[File]
   def cubeFileName(name:String) :String
+  def query(query:CubeQuery) : Iterator[(Vector[String], Vector[String])]
 
   def dsd(name: String): Option[Dsd]
 }
@@ -54,6 +56,10 @@ class CubeManagerImpl(config:Config) extends CubeManager{
     val dimensions = cube.dimensions().map(cube.dimension)
     Dsd(cube.name(), dimensions)
   })
+
+  override def query(query: CubeQuery): Iterator[(Vector[String],Vector[String])] = {
+    cubeFile(query.name).map(Cube.open).map(QueryBuilder.query).map(_.run()).getOrElse(Iterator.empty)
+  }
 }
 
 case class CubeSearchResult(entries:Seq[CubeSearchResultEntry])

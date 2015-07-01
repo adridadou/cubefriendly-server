@@ -2,6 +2,7 @@ package org.cubefriendly.rest
 
 import akka.event.NoLogging
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.cubefriendly.manager.{CubeManager, CubeSearchResult, CubeSearchResultEntry}
 import org.scalamock.scalatest.MockFactory
@@ -35,11 +36,11 @@ class SourceServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     manager.delete _ expects "myname2" returning false
 
     Get("/source/delete/myname") ~> sourceRoutes ~> check {
-      status.intValue() shouldEqual 200
+      status shouldEqual OK
     }
 
     Get("/source/delete/myname2") ~> sourceRoutes ~> check {
-      status.intValue() shouldEqual 404
+      status shouldEqual NotFound
     }
   }
 }

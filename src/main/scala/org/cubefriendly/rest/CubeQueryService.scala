@@ -20,7 +20,7 @@ trait CubeQueryService extends Protocols {
   implicit val materializer: Materializer
   implicit val manager: CubeManager
   val logger: LoggingAdapter
-  val cubeQueryRoutes = {
+  val cubeQueryRoutes = rejectEmptyResponse {
     logRequestResult("cubefriendly-microservice") {
       pathPrefix("cube") {
         path("dsd" / Rest) { name =>
@@ -30,7 +30,10 @@ trait CubeQueryService extends Protocols {
         } ~ (path("query") & post) {
           entity(as[CubeQuery]) { query =>
             complete {
-              "hello"
+              manager.query(query).map({case (keys,values) => Map(
+                "keys" -> keys,
+                "values" -> values
+              )}).toVector
             }
           }
         }
