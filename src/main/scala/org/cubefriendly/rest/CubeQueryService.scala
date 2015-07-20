@@ -3,6 +3,7 @@ package org.cubefriendly.rest
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import com.typesafe.config.Config
@@ -30,10 +31,10 @@ trait CubeQueryService extends Protocols {
         } ~ (path("query") & post) {
           entity(as[CubeQuery]) { query =>
             complete {
-              manager.query(query).map({case (keys,values) => Map(
+              ToResponseMarshallable(manager.query(query).map({case (keys,values) => Map(
                 "keys" -> keys,
                 "values" -> values
-              )}).toVector
+              )}).toVector)
             }
           }
         }

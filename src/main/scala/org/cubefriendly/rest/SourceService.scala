@@ -5,6 +5,7 @@ import java.io.File
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.Multipart.FormData
 import akka.http.scaladsl.server.Directives._
@@ -36,7 +37,7 @@ trait SourceService extends Protocols {
           }
         } ~ (path("upload") & post & entity(as[FormData])){
           formData => complete {
-            formData.parts.runForeach(upload).map(u => "upload successful!")
+            formData.parts.runForeach(upload).map(u => ToResponseMarshallable(Map("result" -> "success")))
           }
         } ~ path("delete" / Rest) {cube =>
           complete(
@@ -58,7 +59,7 @@ trait SourceService extends Protocols {
     val dest = manager.cubeFile(filename).getOrElse(new File(manager.cubeFileName(filename)))
 
     bodyPart.entity.dataBytes.runFold(new CsvProcessor(dest))({ (processor, byteString) =>
-      processor.process(byteString.decodeString("UTF-8").toCharArray)
+      processor.process(byteString.utf8String.toCharArray)
     }).map(_.complete().close())
   }
 }

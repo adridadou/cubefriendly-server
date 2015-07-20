@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
+import org.cubefriendly.AppModule
 import org.cubefriendly.manager.{CubeManager, CubeManagerModule}
 import org.cubefriendly.rest.{CubeQueryService, SourceService}
 import scaldi.Injectable
@@ -16,7 +17,7 @@ import scaldi.Injectable
  */
 object CubefriendlyServer extends App with SourceService with CubeQueryService with Injectable{
 
-  implicit val appModule = new CubeManagerModule
+  implicit val appModule = new AppModule :: new CubeManagerModule
 
   override implicit val system = ActorSystem()
   override implicit val executor = system.dispatcher
@@ -33,7 +34,7 @@ object CubefriendlyServer extends App with SourceService with CubeQueryService w
   }
 
   val corsRoutes = {
-    respondWithHeaders(corsHeaders) {sourceRoutes ~ cubeQueryRoutes ~ optionsSupport}
+    respondWithHeaders(corsHeaders) {optionsSupport ~ sourceRoutes ~ cubeQueryRoutes}
   }
 
   Http().bindAndHandle(corsRoutes, config.getString("http.interface"), config.getInt("http.port"))
