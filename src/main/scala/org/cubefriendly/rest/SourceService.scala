@@ -53,7 +53,6 @@ trait SourceService extends Protocols {
   def config: Config
 
   private def upload(bodyPart:FormData.BodyPart):Unit = {
-    // read a upload file, but not execute this block
     val filename = bodyPart.filename.getOrElse("upload")
     manager.cubeFile(filename).foreach(_.delete())
     val dest = manager.cubeFile(filename).getOrElse(new File(manager.cubeFileName(filename)))

@@ -16,4 +16,6 @@ trait Protocols extends DefaultJsonProtocol with CollectionFormats {
   implicit val dimensionFormat = jsonFormat2(Dimension.apply)
   implicit val dsdFormat = jsonFormat2(Dsd.apply)
   implicit val cubeQueryFormat = jsonFormat1(CubeQuery.apply)
+  implicit val cubeQueryRecordFormat = jsonFormat2(CubeQueryRecord.apply)
+  implicit val cubeQueryResponseFormat = jsonFormat1(CubeQueryResponse.apply)
 }

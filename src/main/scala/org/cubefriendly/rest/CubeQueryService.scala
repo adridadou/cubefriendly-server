@@ -25,18 +25,11 @@ trait CubeQueryService extends Protocols {
     logRequestResult("cubefriendly-microservice") {
       pathPrefix("cube") {
         path("dsd" / Rest) { name =>
-          complete {
-            manager.dsd(name)
-          }
-        } ~ (path("query") & post) {
-          entity(as[CubeQuery]) { query =>
-            complete {
-              ToResponseMarshallable(manager.query(query).map({case (keys,values) => Map(
-                "keys" -> keys,
-                "values" -> values
-              )}).toVector)
-            }
-          }
+          complete(ToResponseMarshallable(manager.dsd(name)))
+        } ~ (path("query") & post & entity(as[CubeQuery])) { query =>
+            val response = manager.query(query)
+            val records = response.map({case (vector,metrics) => CubeQueryRecord(vector, metrics)}).toSeq
+            complete(ToResponseMarshallable(CubeQueryResponse(records)))
         }
       }
     }
@@ -48,5 +41,8 @@ trait CubeQueryService extends Protocols {
 }
 
 case class CubeQuery(name: String)
+
+case class CubeQueryRecord(vector:Seq[String], metrics:Seq[String])
+case class CubeQueryResponse(data:Seq[CubeQueryRecord])
 
 

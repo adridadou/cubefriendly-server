@@ -46,10 +46,12 @@ class CubeQueryServiceSpec extends FlatSpec with Matchers with ScalatestRouteTes
 
     val query = CubeQuery("mytest")
 
-    manager.query _ expects query returns Iterator()
+    manager.query _ expects query returns Iterator((Vector("key"),Vector("value")))
 
     Post("/cube/query",query) ~> cubeQueryRoutes ~> check {
       status shouldEqual OK
+      val entity = entityAs[CubeQueryResponse]
+      entity.data shouldEqual Seq(CubeQueryRecord(Seq("key"),Seq("value")))
     }
   }
 
