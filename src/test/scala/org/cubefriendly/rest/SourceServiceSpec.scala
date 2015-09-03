@@ -5,6 +5,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.cubefriendly.manager.{CubeManager, CubeSearchResult, CubeSearchResultEntry}
+import org.cubefriendly.processors.DataProcessorProvider
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, _}
 
@@ -12,6 +13,7 @@ import org.scalatest.{Matchers, _}
 class SourceServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest with MockFactory with SourceService {
   override val manager = mock[CubeManager]
   override val logger = NoLogging
+  override val provider = mock[DataProcessorProvider]
 
   override def testConfigSource = "akka.loglevel = WARNING"
 

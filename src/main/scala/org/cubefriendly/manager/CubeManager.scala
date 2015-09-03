@@ -4,7 +4,8 @@ import java.io.File
 
 import com.typesafe.config.Config
 import org.cubefriendly.data.{Cube, Dimension, QueryBuilder}
-import org.cubefriendly.rest.CubeQuery
+import org.cubefriendly.reflection.DimensionValuesSelector
+import org.cubefriendly.rest.{CubeQuery, DimensionQuery, DimensionQueryFunction}
 import scaldi.Module
 
 /**
@@ -58,7 +59,23 @@ class CubeManagerImpl(config:Config) extends CubeManager{
   })
 
   override def query(query: CubeQuery): Iterator[(Vector[String],Vector[String])] = {
-    cubeFile(query.name).map(Cube.open).map(QueryBuilder.query).map(_.run()).getOrElse(Iterator.empty)
+    cubeFile(query.source).map(Cube.open).map(QueryBuilder.query).map(queryObject => {
+      val values = query.dimensions.map({
+        case (dimension,dimensionQuery) => dimension -> getSelectedElements(queryObject.cube,dimension,dimensionQuery)
+      })
+      queryObject.where(values)
+      queryObject.run()
+    }).getOrElse(Iterator.empty)
+  }
+
+  private def getSelectedElements(cube:Cube, dimension:String, query:DimensionQuery) : Vector[String] = {
+    val values = cube.dimension(dimension).values
+    (query.values ++ query.indexes.map(values.apply) ++ query.functions.flatMap(getElementsFromFunction(cube,dimension,_))).toVector
+  }
+
+  private def getElementsFromFunction(cube:Cube, dimension:String, function:DimensionQueryFunction) : Vector[String] = {
+    DimensionValuesSelector.funcs(function.name).select(function.args :_*)
+
   }
 }
 

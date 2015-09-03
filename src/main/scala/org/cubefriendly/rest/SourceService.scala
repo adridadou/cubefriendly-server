@@ -12,7 +12,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import com.typesafe.config.Config
 import org.cubefriendly.manager.CubeManager
-import org.cubefriendly.processors.CsvProcessor
+import org.cubefriendly.processors.DataProcessorProvider
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -27,6 +27,8 @@ trait SourceService extends Protocols {
   implicit val system: ActorSystem
   implicit val materializer: Materializer
   implicit val manager: CubeManager
+  implicit val provider: DataProcessorProvider
+
   val logger: LoggingAdapter
   val sourceRoutes = {
     logRequestResult("cubefriendly-microservice") {
@@ -56,8 +58,8 @@ trait SourceService extends Protocols {
     val filename = bodyPart.filename.getOrElse("upload")
     manager.cubeFile(filename).foreach(_.delete())
     val dest = manager.cubeFile(filename).getOrElse(new File(manager.cubeFileName(filename)))
-
-    bodyPart.entity.dataBytes.runFold(new CsvProcessor(dest))({ (processor, byteString) =>
+    val processor = provider.getProcessorByFilename(filename,dest)
+    bodyPart.entity.dataBytes.runFold(processor)({ (processor, byteString) =>
       processor.process(byteString.utf8String.toCharArray)
     }).map(_.complete().close())
   }

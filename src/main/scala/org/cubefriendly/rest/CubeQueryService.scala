@@ -39,8 +39,9 @@ trait CubeQueryService extends Protocols {
 
   def config: Config
 }
-
-case class CubeQuery(name: String)
+case class DimensionQueryFunction(name:String, args:Seq[String])
+case class CubeQuery(source: String, dimensions:Map[String,DimensionQuery] = Map())
+case class DimensionQuery(indexes:Seq[Int] = Seq(), values:Seq[String] = Seq(), functions:Seq[DimensionQueryFunction] = Seq())
 
 case class CubeQueryRecord(vector:Seq[String], metrics:Seq[String])
 case class CubeQueryResponse(data:Seq[CubeQueryRecord])

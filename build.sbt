@@ -22,7 +22,7 @@ publishTo := {
 
 libraryDependencies ++= {
   val akkaV       = "2.3.11"
-  val akkaStreamV = "1.0-RC4"
+  val akkaStreamV = "1.0"
   val scalaTestV  = "2.2.4"
   val scaldiV     = "0.5.5"
   Seq(

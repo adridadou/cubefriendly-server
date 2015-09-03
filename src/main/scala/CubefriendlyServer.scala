@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import org.cubefriendly.AppModule
 import org.cubefriendly.manager.{CubeManager, CubeManagerModule}
+import org.cubefriendly.processors.DataProcessorProvider
 import org.cubefriendly.rest.{CubeQueryService, SourceService}
 import scaldi.Injectable
 
@@ -23,6 +24,7 @@ object CubefriendlyServer extends App with SourceService with CubeQueryService w
   override implicit val executor = system.dispatcher
   override implicit val materializer = ActorMaterializer()
   override implicit val manager = inject[CubeManager]
+  override implicit val provider = inject[DataProcessorProvider]
   override val config = ConfigFactory.load()
   override val logger = Logging(system, getClass)
   val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),

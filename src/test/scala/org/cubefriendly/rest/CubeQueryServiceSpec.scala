@@ -55,4 +55,8 @@ class CubeQueryServiceSpec extends FlatSpec with Matchers with ScalatestRouteTes
     }
   }
 
+  "CubeQueryService" should "query a cube" in {
+    val dimensions = Map()
+    val query = CubeQuery("mytest")
+  }
 }
