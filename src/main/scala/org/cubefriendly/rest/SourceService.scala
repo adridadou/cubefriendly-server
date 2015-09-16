@@ -60,7 +60,7 @@ trait SourceService extends Protocols {
     val dest = manager.cubeFile(filename).getOrElse(new File(manager.cubeFileName(filename)))
     val processor = provider.getProcessorByFilename(filename,dest)
     bodyPart.entity.dataBytes.runFold(processor)({ (processor, byteString) =>
-      processor.process(byteString.utf8String.toCharArray)
+      processor.process(byteString.decodeString(processor.defaultEncoding).toCharArray)
     }).map(_.complete().close())
   }
 }

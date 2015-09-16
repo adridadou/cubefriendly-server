@@ -2,6 +2,7 @@ package org.cubefriendly
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.cubefriendly.manager.{CubeManager, CubeManagerImpl}
+import org.cubefriendly.processors.{DataProcessorProvider, DataProcessorProviderImpl}
 import scaldi.Module
 
 /**
@@ -12,4 +13,5 @@ import scaldi.Module
 class AppModule extends Module {
   bind[Config] to ConfigFactory.load()
   bind[CubeManager] to injected[CubeManagerImpl]
+  bind[DataProcessorProvider] to injected[DataProcessorProviderImpl]
 }
