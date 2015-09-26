@@ -35,6 +35,9 @@ class CubeManagerImpl(config:Config) extends CubeManager{
 
   val scalaCache:collection.mutable.Map[String, Cube] = mutable.Map.empty
   val entries:mutable.Map[String, DateTime] = mutable.Map.empty
+
+  private def openCube(name:String) : Option[Cube] = cubeFile(name).map(openCube)
+
   private def openCube(file:File) : Cube = {
     this.synchronized {
       val key = file.getAbsolutePath
@@ -101,7 +104,15 @@ class CubeManagerImpl(config:Config) extends CubeManager{
   }
 
   override def query(query: ValuesQuery): Vector[String] = {
-    Vector()
+    val lang = query.lang.map(Language.apply)
+    openCube(query.cube).map( cube =>{
+    val func = DimensionValuesSelector.funcs(query.func)
+      lang match {
+        case Some(language) => cube.searchDimension(query.dimension,language, func,query.params,query.limit)
+        case None => cube.searchDimension(query.dimension, func,query.params, query.limit)
+      }
+    }
+    ).getOrElse(Vector[String]())
   }
 
   private def getSelectedElements(cube:Cube, dimension:String, query:DimensionQuery) : Vector[String] = {
@@ -110,8 +121,8 @@ class CubeManagerImpl(config:Config) extends CubeManager{
   }
 
   private def getElementsFromFunction(cube:Cube, dimension:String, function:DimensionQueryFunction) : Vector[String] = {
-    DimensionValuesSelector.funcs(function.name).select(function.args :_*)
-
+    val func = DimensionValuesSelector.funcs(function.name)
+    cube.searchDimension(dimension, func, function.args,None)
   }
 }
 

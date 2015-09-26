@@ -35,19 +35,20 @@ trait CubeQueryService extends Protocols {
         }} ~ path("values" / Segment / Segment){ (cube,dimension) =>
           parameter('lang.?){ lang =>
             complete(ToResponseMarshallable(manager.values(cube,dimension,lang.map(Language.apply))))
-        }} ~ path("query") {
-          (path("cube") & post & entity(as[CubeQuery])){ query =>
-            extractRequestContext { ctx =>
-              import spray.json._
-              val transformedResponse = manager.query(query).map({ case (vector, metrics) =>
-                "[" + vector.toJson.compactPrint + "," + metrics.toJson.compactPrint + "]"
-              })
-              val responseSource = Source(() => new IteratorDecorator(transformedResponse, "[", "]").map(ByteString.apply))
-              complete(HttpResponse(entity = Chunked.fromData(`application/json`, responseSource)))
-            }
-          } ~(path("values") & post & entity(as[ValuesQuery])) {query =>
-            complete(ToResponseMarshallable(manager.query(query)))
+        }}
+      } ~ pathPrefix("query") {
+        (path("cube") & post & entity(as[CubeQuery])){ query =>
+          extractRequestContext { ctx =>
+            import spray.json._
+            val transformedResponse = manager.query(query).map({ case (vector, metrics) =>
+              "[" + vector.toJson.compactPrint + "," + metrics.toJson.compactPrint + "]"
+            })
+            val responseSource = Source(() => transformedResponse.map(ByteString.apply))
+            val jsonStream = Source.concat(Source.concat(Source.single(ByteString("[")), responseSource), Source.single(ByteString("]")))
+            complete(HttpResponse(entity = Chunked.fromData(`application/json`, jsonStream)))
           }
+        } ~(path("values") & post & entity(as[ValuesQuery])) {query =>
+          complete(ToResponseMarshallable(manager.query(query)))
         }
       }
     }
@@ -57,27 +58,9 @@ trait CubeQueryService extends Protocols {
 
   def config: Config
 }
-case class DimensionQueryFunction(name:String, args:Seq[String])
+case class DimensionQueryFunction(name:String, args:Vector[String])
 case class CubeQuery(source: String, dimensions:Map[String,DimensionQuery] = Map(), lang:Option[Language] = None)
 case class DimensionQuery(indexes:Seq[Int] = Seq(), values:Seq[String] = Seq(), functions:Seq[DimensionQueryFunction] = Seq())
 
 
-case class ValuesQuery(cubes:Vector[String], dimension:String, func:String,params:Vector[String], lang:Option[Language])
-
-class IteratorDecorator(val iterator:Iterator[String], firstValue:String, lastValue:String) extends Iterator[String] {
-  private var isFirst = true
-  private var afterLast = false
-  override def hasNext: Boolean = iterator.hasNext || !afterLast
-
-  override def next(): String = {
-    if(isFirst) {
-      isFirst = false
-      firstValue
-    } else if (iterator.hasNext){
-      iterator.next()
-    }else {
-      afterLast = true
-      lastValue
-    }
-  }
-}
+case class ValuesQuery(cube:String, dimension:String, func:String,params:Vector[String], limit:Option[Int], lang:Option[String] = None)
