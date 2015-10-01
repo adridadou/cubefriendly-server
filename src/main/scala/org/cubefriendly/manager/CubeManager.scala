@@ -6,7 +6,7 @@ import java.util.Date
 import com.typesafe.config.Config
 import org.cubefriendly.data.{Cube, QueryBuilder}
 import org.cubefriendly.processors.Language
-import org.cubefriendly.reflection.DimensionValuesSelector
+import org.cubefriendly.reflection.ResultTransformer
 import org.cubefriendly.rest.{CubeQuery, DimensionQuery, DimensionQueryFunction, ValuesQuery}
 import org.joda.time.DateTime
 import scaldi.Module
@@ -90,39 +90,49 @@ class CubeManagerImpl(config:Config) extends CubeManager{
   }).getOrElse(Seq())
 
   override def values(name:String, dimension:String, optLang:Option[Language]): Seq[String] = cubeFile(name).map(openCube).map(cube => {
-    optLang.map(cube.dimension(dimension,_)).getOrElse(cube.dimension(name)).values
+    optLang.map(cube.dimension(dimension,_)).getOrElse(cube.dimension(name))
   }).getOrElse(Seq())
 
   override def query(query: CubeQuery): Iterator[(Vector[String],Vector[String])] = {
-    cubeFile(query.source).map(openCube).map(QueryBuilder.query).map(queryObject => {
+    cubeFile(query.cube).map(openCube).map(QueryBuilder.query).map(queryObject => {
+      val lang = query.lang.map(Language.apply)
       val values = query.dimensions.map({
-        case (dimension,dimensionQuery) => dimension -> getSelectedElements(queryObject.cube,dimension,dimensionQuery)
+        case (dimension,dimensionQuery) => dimension -> getSelectedElements(queryObject.cube,dimension,dimensionQuery, lang)
       })
-      queryObject.where(values)
-      queryObject.run()
+      lang match {
+        case Some(language) =>
+          queryObject.where(language, values)
+          queryObject.in(language)
+          query.eliminate.getOrElse(Seq()).foreach(queryObject.eliminate(language,_))
+        case None =>
+          queryObject.where(values)
+          query.eliminate.getOrElse(Seq()).foreach(queryObject.eliminate(_))
+      }
+
+      val result = queryObject.run()
+      query.transform.map(transform => {
+        val func = ResultTransformer.funcs(transform.func)
+        func.transform(result,transform.args)
+      }).getOrElse(result)
     }).getOrElse(Iterator.empty)
   }
 
   override def query(query: ValuesQuery): Vector[String] = {
+    println(query)
     val lang = query.lang.map(Language.apply)
-    openCube(query.cube).map( cube =>{
-    val func = DimensionValuesSelector.funcs(query.func)
-      lang match {
-        case Some(language) => cube.searchDimension(query.dimension,language, func,query.params,query.limit)
-        case None => cube.searchDimension(query.dimension, func,query.params, query.limit)
-      }
-    }
-    ).getOrElse(Vector[String]())
+    openCube(query.cube).map( cube => cube.searchDimension(query.dimension,lang, query.func,query.params,query.limit)).getOrElse(Vector[String]())
   }
 
-  private def getSelectedElements(cube:Cube, dimension:String, query:DimensionQuery) : Vector[String] = {
-    val values = cube.dimension(dimension).values
-    (query.values ++ query.indexes.map(values.apply) ++ query.functions.flatMap(getElementsFromFunction(cube,dimension,_))).toVector
+  private def getSelectedElements(cube:Cube, dimension:String, query:DimensionQuery, lang:Option[Language]) : Vector[String] = {
+    val values = lang match {
+      case Some(language) => cube.dimension(dimension, language)
+      case None => cube.dimension(dimension)
+    }
+    (query.values.getOrElse(Vector()) ++ query.indexes.getOrElse(Vector()).map(values.apply) ++ query.functions.getOrElse(Vector()).flatMap(getElementsFromFunction(cube,dimension,_))).toVector
   }
 
   private def getElementsFromFunction(cube:Cube, dimension:String, function:DimensionQueryFunction) : Vector[String] = {
-    val func = DimensionValuesSelector.funcs(function.name)
-    cube.searchDimension(dimension, func, function.args,None)
+    cube.searchDimension(dimension,function.lang.map(Language.apply), function.name, function.args,None)
   }
 }
 

@@ -41,10 +41,11 @@ trait CubeQueryService extends Protocols {
           extractRequestContext { ctx =>
             import spray.json._
             val transformedResponse = manager.query(query).map({ case (vector, metrics) =>
-              "[" + vector.toJson.compactPrint + "," + metrics.toJson.compactPrint + "]"
+              ",[" + vector.toJson.compactPrint + "," + metrics.toJson.compactPrint + "]"
             })
+            val firstElement = transformedResponse.next().substring(1)
             val responseSource = Source(() => transformedResponse.map(ByteString.apply))
-            val jsonStream = Source.concat(Source.concat(Source.single(ByteString("[")), responseSource), Source.single(ByteString("]")))
+            val jsonStream = Source.concat(Source.concat(Source.single(ByteString("[" + firstElement)), responseSource), Source.single(ByteString("]")))
             complete(HttpResponse(entity = Chunked.fromData(`application/json`, jsonStream)))
           }
         } ~(path("values") & post & entity(as[ValuesQuery])) {query =>
@@ -58,9 +59,9 @@ trait CubeQueryService extends Protocols {
 
   def config: Config
 }
-case class DimensionQueryFunction(name:String, args:Vector[String])
-case class CubeQuery(source: String, dimensions:Map[String,DimensionQuery] = Map(), lang:Option[Language] = None)
-case class DimensionQuery(indexes:Seq[Int] = Seq(), values:Seq[String] = Seq(), functions:Seq[DimensionQueryFunction] = Seq())
+case class DimensionQueryFunction(name:String, lang:Option[String], args:Map[String, String])
+case class TransformFunction(func:String, args:Map[String, String])
+case class CubeQuery(cube: String, dimensions:Map[String,DimensionQuery], eliminate:Option[Seq[String]],transform:Option[TransformFunction], lang:Option[String])
+case class DimensionQuery(indexes:Option[Seq[Int]], values:Option[Seq[String]], functions:Option[Seq[DimensionQueryFunction]])
 
-
-case class ValuesQuery(cube:String, dimension:String, func:String,params:Vector[String], limit:Option[Int], lang:Option[String] = None)
+case class ValuesQuery(cube:String, dimension:String, func:String,params:Map[String, String], limit:Option[Int], lang:Option[String] = None)
