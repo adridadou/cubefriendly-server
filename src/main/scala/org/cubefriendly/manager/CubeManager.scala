@@ -118,7 +118,6 @@ class CubeManagerImpl(config:Config) extends CubeManager{
   }
 
   override def query(query: ValuesQuery): Vector[String] = {
-    println(query)
     val lang = query.lang.map(Language.apply)
     openCube(query.cube).map( cube => cube.searchDimension(query.dimension,lang, query.func,query.params,query.limit)).getOrElse(Vector[String]())
   }
