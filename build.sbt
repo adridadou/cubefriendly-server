@@ -1,6 +1,6 @@
 enablePlugins(JavaAppPackaging)
 
-name         := "cubefriendly-studio"
+name         := "cubefriendly-server"
 organization := "org.cubefriendly"
 version      := "0.1-SNAPSHOT"
 scalaVersion := "2.11.7"
